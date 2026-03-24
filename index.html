@@ -1729,9 +1729,155 @@ function toggleVoice() {
 }
 
 // ══════════════════════════════════════
-// AI — SEND JOB
+// LOCAL PARSER (fallback sin IA)
 // ══════════════════════════════════════
 const today = new Date().toISOString().split('T')[0];
+
+function localParse(text) {
+  let t = text.trim();
+  if (!t || t.length < 3) return null;
+
+  // 1. Extract amount (remove from text after extracting)
+  let monto = 0;
+  let cleaned = t;
+
+  // "8 millones de pesos" / "8 millones"
+  const millMatch = cleaned.match(/(\d+[\.,]?\d*)\s*millon(es)?(\s+de\s+pesos)?/i);
+  if (millMatch) {
+    monto = parseFloat(millMatch[1].replace(',', '.')) * 1000000;
+    cleaned = cleaned.replace(millMatch[0], '').trim();
+  }
+
+  // "$8.000.000" / "$45.000" / "$45000"
+  if (!monto) {
+    const dollarMatch = cleaned.match(/\$\s*([\d.]+)/);
+    if (dollarMatch) {
+      monto = Number(dollarMatch[1].replace(/\./g, ''));
+      cleaned = cleaned.replace(dollarMatch[0], '').trim();
+    }
+  }
+
+  // "30 lucas" / "30 luca"
+  if (!monto) {
+    const lucasMatch = cleaned.match(/(\d+[\.,]?\d*)\s*lucas?/i);
+    if (lucasMatch) {
+      monto = parseFloat(lucasMatch[1].replace(',', '.')) * 1000;
+      cleaned = cleaned.replace(lucasMatch[0], '').trim();
+    }
+  }
+
+  // "30k" / "30 k"
+  if (!monto) {
+    const kMatch = cleaned.match(/(\d+[\.,]?\d*)\s*k\b/i);
+    if (kMatch) {
+      monto = parseFloat(kMatch[1].replace(',', '.')) * 1000;
+      cleaned = cleaned.replace(kMatch[0], '').trim();
+    }
+  }
+
+  // "30 mil" / "30mil"
+  if (!monto) {
+    const milMatch = cleaned.match(/(\d+[\.,]?\d*)\s*mil\b/i);
+    if (milMatch) {
+      monto = parseFloat(milMatch[1].replace(',', '.')) * 1000;
+      cleaned = cleaned.replace(milMatch[0], '').trim();
+    }
+  }
+
+  // Plain number: "45000" / "8000000"
+  if (!monto) {
+    const numMatch = cleaned.match(/(\d{4,})/);
+    if (numMatch) {
+      monto = Number(numMatch[1]);
+      cleaned = cleaned.replace(numMatch[0], '').trim();
+    }
+  }
+
+  // Remove leftover "de pesos" / "pesos"
+  cleaned = cleaned.replace(/\b(de\s+)?pesos?\b/gi, '').trim();
+  // Remove trailing/leading commas, dots, dashes
+  cleaned = cleaned.replace(/^[\s,.\-—]+|[\s,.\-—]+$/g, '').trim();
+
+  // 2. Extract date
+  let fecha = today;
+  if (/\bayer\b/i.test(cleaned)) {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    fecha = d.toISOString().split('T')[0];
+    cleaned = cleaned.replace(/\bayer\b/i, '').trim();
+  } else if (/\bsemana\s+pasada\b/i.test(cleaned)) {
+    const d = new Date(); d.setDate(d.getDate() - 7);
+    fecha = d.toISOString().split('T')[0];
+    cleaned = cleaned.replace(/\b(la\s+)?semana\s+pasada\b/i, '').trim();
+  }
+
+  // 3. Split into description and client using prepositions
+  let cliente = '';
+  let descripcion = '';
+
+  // Try: "descripcion a/para/en lo de cliente"
+  const splitPatterns = [
+    /^(.+?)\s+(?:a|para|en lo de|en casa de)\s+(.+)$/i,
+    /^(.+?)\s+(?:en|de)\s+([A-Z].+)$/,  // "en" or "de" followed by capitalized word
+  ];
+
+  for (const pat of splitPatterns) {
+    const m = cleaned.match(pat);
+    if (m) {
+      descripcion = m[1].trim();
+      cliente = m[2].trim();
+      break;
+    }
+  }
+
+  // If no split found, try: "cliente - descripcion" or just use whole text as description
+  if (!cliente && !descripcion) {
+    const dashSplit = cleaned.match(/^(.+?)\s*[-—]\s*(.+)$/);
+    if (dashSplit) {
+      cliente = dashSplit[1].trim();
+      descripcion = dashSplit[2].trim();
+    } else {
+      // Use whole text as description, leave client empty
+      descripcion = cleaned;
+    }
+  }
+
+  // Clean up trailing prepositions
+  cliente = cliente.replace(/^(el|la|los|las|lo)\s+/i, '').trim();
+  cliente = cliente.replace(/[\s,.\-—]+$/g, '').trim();
+  descripcion = descripcion.replace(/[\s,.\-—]+$/g, '').trim();
+
+  // Need at least description or client
+  if (!descripcion && !cliente) return null;
+
+  return {
+    cliente: cliente || 'Sin nombre',
+    descripcion: descripcion || 'Trabajo eléctrico',
+    monto: Math.round(monto),
+    fecha
+  };
+}
+
+// ══════════════════════════════════════
+// SEND JOB (AI + local fallback)
+// ══════════════════════════════════════
+function saveJobFromParsed(parsed, input, source) {
+  const jobs = getJobs();
+  jobs.unshift({
+    id: Date.now(),
+    cliente: parsed.cliente,
+    descripcion: parsed.descripcion,
+    monto: Number(parsed.monto) || 0,
+    fecha: parsed.fecha || today,
+    pagado: false,
+    creadoEn: new Date().toISOString()
+  });
+  saveJobs(jobs);
+  input.value = '';
+  currentTab = 'pendientes';
+  setTab('pendientes');
+  const tag = source === 'local' ? '📝' : '✅';
+  showToast(`${tag} ${parsed.cliente} — ${formatCurrency(parsed.monto || 0)}`, 'ok');
+}
 
 async function sendJob() {
   const input = document.getElementById('job-input');
@@ -1742,17 +1888,20 @@ async function sendJob() {
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-dots" style="font-size:11px"></span>';
 
-  // Rate limit throttle: min 6s between API calls
-  const now = Date.now();
-  const elapsed = now - lastApiCall;
-  if (elapsed < 6000) {
-    const wait = 6000 - elapsed;
-    showToast(`Esperando ${Math.ceil(wait/1000)}s...`, 'info');
-    await new Promise(r => setTimeout(r, wait));
-  }
-  lastApiCall = Date.now();
+  const apiKey = getApiKey();
+  let aiSuccess = false;
 
-  const SYSTEM = `Sos un asistente para un electricista independiente argentino. Extraé la info del trabajo y respondé SOLO con JSON válido.
+  // Try AI first (single attempt, no long retries)
+  if (apiKey) {
+    // Throttle: min 6s between API calls
+    const now = Date.now();
+    const elapsed = now - lastApiCall;
+    if (elapsed < 6000) {
+      await new Promise(r => setTimeout(r, 6000 - elapsed));
+    }
+    lastApiCall = Date.now();
+
+    const SYSTEM = `Sos un asistente para un electricista independiente argentino. Extraé la info del trabajo y respondé SOLO con JSON válido.
 
 Cuando describan un trabajo:
 {"cliente":"nombre","descripcion":"descripción breve del trabajo","monto":0,"fecha":"YYYY-MM-DD"}
@@ -1768,106 +1917,61 @@ Reglas:
 Si NO es un trabajo (es una pregunta o saludo):
 {"error":"no_trabajo","mensaje":"respuesta breve en español"}`;
 
-  const apiKey = getApiKey();
-  const models = ['gemini-2.0-flash-lite', 'gemini-1.5-flash'];
-  const bodyPayload = JSON.stringify({
-    contents: [{ parts: [{ text: SYSTEM + '\n\nUsuario: ' + text }] }],
-    generationConfig: { responseMimeType: 'application/json' }
-  });
-
-  try {
-    let data = null;
-
-    for (const model of models) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: bodyPayload
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: SYSTEM + '\n\nUsuario: ' + text }] }],
+          generationConfig: { responseMimeType: 'application/json' }
+        })
       });
 
-      if (res.status === 429) {
-        // First 429: wait 10s and retry same model
-        showToast('Muchas consultas, reintentando en 10s...', 'info');
-        await new Promise(r => setTimeout(r, 10000));
-        lastApiCall = Date.now();
+      if (res.ok) {
+        const data = await res.json();
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        let parsed;
+        try { parsed = JSON.parse(raw); } catch { parsed = null; }
 
-        const retry = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: bodyPayload
-        });
-
-        if (retry.status === 429) {
-          // Try next model (fallback)
-          continue;
-        }
-        if (!retry.ok) {
-          showToast(`Error del servidor (${retry.status})`, 'error');
+        if (parsed && parsed.error === 'no_trabajo') {
+          showToast(parsed.mensaje || 'Describí el trabajo con más detalle.', 'info');
+          btn.disabled = false;
+          btn.innerHTML = '⚡';
           return;
         }
-        data = await retry.json();
-        break;
+
+        if (parsed && parsed.cliente && parsed.descripcion) {
+          saveJobFromParsed(parsed, input, 'ai');
+          aiSuccess = true;
+        }
       }
-
-      if (res.status === 400 || res.status === 403) {
-        showToast('API Key inválida. Revisá en Configuración.', 'error');
-        return;
-      }
-
-      if (!res.ok) {
-        showToast(`Error del servidor (${res.status})`, 'error');
-        return;
-      }
-
-      data = await res.json();
-      break;
+      // If not ok (429, 500, etc.) — fall through to local parser
+    } catch (e) {
+      // Network error — fall through to local parser
     }
-
-    if (!data) {
-      showToast('Servicio ocupado. Esperá 1 minuto e intentá de nuevo.', 'warn');
-      return;
-    }
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    let parsed;
-    try { parsed = JSON.parse(raw); } catch { parsed = null; }
-
-    if (!parsed) {
-      showToast('No pude entender la respuesta. Intentá de nuevo.', 'warn');
-      return;
-    }
-
-    if (parsed.error === 'no_trabajo') {
-      showToast(parsed.mensaje || 'Describí el trabajo con más detalle.', 'info');
-      return;
-    }
-
-    if (parsed.cliente && parsed.descripcion) {
-      const jobs = getJobs();
-      jobs.unshift({
-        id: Date.now(),
-        cliente: parsed.cliente,
-        descripcion: parsed.descripcion,
-        monto: Number(parsed.monto) || 0,
-        fecha: parsed.fecha || today,
-        pagado: false,
-        creadoEn: new Date().toISOString()
-      });
-      saveJobs(jobs);
-      input.value = '';
-      currentTab = 'pendientes';
-      setTab('pendientes');
-      showToast(`✅ ${parsed.cliente} — ${formatCurrency(parsed.monto || 0)}`, 'ok');
-    } else {
-      showToast('Describí el trabajo con más detalle.', 'warn');
-    }
-
-  } catch (e) {
-    showToast('Sin conexión o error de red.', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '⚡';
   }
+
+  // Fallback: local parser
+  if (!aiSuccess) {
+    const local = localParse(text);
+    if (local && (local.cliente !== 'Sin nombre' || local.descripcion !== 'Trabajo eléctrico')) {
+      saveJobFromParsed(local, input, 'local');
+    } else {
+      // Can't parse — open manual modal with text pre-filled
+      document.getElementById('edit-modal-title').textContent = 'AGREGAR MANUAL';
+      document.getElementById('edit-id').value = '';
+      document.getElementById('edit-cliente').value = '';
+      document.getElementById('edit-desc').value = text;
+      document.getElementById('edit-monto').value = '';
+      document.getElementById('edit-fecha').value = today;
+      document.getElementById('edit-save-btn').textContent = 'AGREGAR';
+      showModal('edit-modal');
+      input.value = '';
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '⚡';
 }
 
 // ══════════════════════════════════════
