@@ -872,6 +872,44 @@
       margin-bottom: 6px;
     }
 
+    /* Partial payment progress */
+    .job-pagos-info {
+      font-size: 12px;
+      color: var(--green);
+      margin-top: 4px;
+    }
+
+    .job-progress {
+      height: 4px;
+      background: var(--very-faint);
+      border-radius: 2px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .job-progress-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    .btn-seña {
+      background: transparent;
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      color: var(--green);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 8px 14px;
+      min-height: 44px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .btn-seña:active { background: var(--green); color: var(--bg); }
+
     /* Inline SVG icons */
     .icon-inline { display: inline-flex; align-items: center; vertical-align: middle; }
     .icon-inline svg { flex-shrink: 0; }
@@ -1068,6 +1106,26 @@
 </div>
 
 <!-- ══════════════════════════════════════
+     SEÑA / PAGO PARCIAL MODAL
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="seña-modal" onclick="closeModal(event, 'seña-modal')">
+  <div class="modal">
+    <div class="modal-title">REGISTRAR PAGO</div>
+    <div id="seña-info" style="font-size:14px;color:var(--muted);margin-bottom:16px"></div>
+
+    <div class="modal-field">
+      <div class="field-label">MONTO DEL PAGO ($)</div>
+      <input type="number" class="text-input" id="seña-monto" placeholder="0" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" style="flex:1;margin-top:0;background:var(--green);color:var(--bg)" onclick="saveSeña()">REGISTRAR PAGO</button>
+      <button class="btn-secondary" onclick="hideModal('seña-modal')">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      WHATSAPP MODAL
 ══════════════════════════════════════ -->
 <div class="modal-overlay" id="wa-modal" onclick="closeModal(event, 'wa-modal')">
@@ -1233,6 +1291,10 @@ function getOverdueDays() {
   return getSettings().overdueDays || 7;
 }
 
+function getJobPagos(job) { return job.pagos || []; }
+function getTotalPagado(job) { return getJobPagos(job).reduce((s, p) => s + (p.monto || 0), 0); }
+function getRestante(job) { return Math.max(0, (job.monto || 0) - getTotalPagado(job)); }
+
 function isOverdue(job) {
   if (job.pagado) return false;
   const diff = (Date.now() - new Date(job.fecha + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24);
@@ -1372,8 +1434,8 @@ function renderAll() {
   const pending = jobs.filter(j => !j.pagado);
   const paid = jobs.filter(j => j.pagado);
 
-  const totalPend = pending.reduce((s, j) => s + (j.monto || 0), 0);
-  const totalPaid = paid.reduce((s, j) => s + (j.monto || 0), 0);
+  const totalPend = pending.reduce((s, j) => s + getRestante(j), 0);
+  const totalPaid = paid.reduce((s, j) => s + (j.monto || 0), 0) + pending.reduce((s, j) => s + getTotalPagado(j), 0);
 
   document.getElementById('stat-pendiente').textContent = formatCurrency(totalPend);
   document.getElementById('stat-cobrado').textContent = formatCurrency(totalPaid);
@@ -1443,25 +1505,32 @@ function renderAll() {
   container.innerHTML = lista.map(j => {
     const overdue = isOverdue(j);
     const days = daysSince(j.fecha);
+    const parcial = getTotalPagado(j);
+    const restante = getRestante(j);
+    const hasPagos = parcial > 0 && !j.pagado;
+    const pct = j.monto > 0 ? Math.min(100, Math.round((parcial / j.monto) * 100)) : 0;
     return `
     <div class="job-card ${overdue ? 'overdue' : ''}">
       <div class="job-top">
         <button class="job-client-btn" data-client="${escHtml(j.cliente)}">${escHtml(j.cliente)}</button>
         <span class="chip ${j.pagado ? 'chip-paid' : (overdue ? 'chip-overdue' : 'chip-pending')}">
-          ${j.pagado ? 'COBRADO' : (overdue ? 'ATRASADO' : 'PENDIENTE')}
+          ${j.pagado ? 'COBRADO' : (overdue ? 'ATRASADO' : (hasPagos ? `${pct}% PAGADO` : 'PENDIENTE'))}
         </span>
       </div>
       <div class="job-desc">${escHtml(j.descripcion)}</div>
       ${overdue ? `<div class="job-overdue-tag"><span class="icon-inline">${icon('warning', 14)}</span> Hace ${days} días — sin cobrar</div>` : ''}
       <div class="job-bottom">
-        <div>
+        <div style="flex:1">
           <div class="job-amount" style="color:${j.pagado ? 'var(--green)' : (overdue ? 'var(--red)' : 'var(--yellow)')}">
             ${j.monto > 0 ? formatCurrency(j.monto) : '—'}
           </div>
+          ${hasPagos ? `<div class="job-pagos-info">Pagó ${formatCurrency(parcial)} · resta ${formatCurrency(restante)}</div>
+          <div class="job-progress"><div class="job-progress-fill" style="width:${pct}%"></div></div>` : ''}
           <div class="job-date">${formatDate(j.fecha)}${j.pagado && j.fechaPago ? ' · cobrado ' + formatDate(j.fechaPago) : ''}</div>
         </div>
         <div class="job-actions">
-          ${!j.pagado ? `<button class="btn-pay" onclick="confirmPaid(${j.id})">COBRÉ ✓</button>` : ''}
+          ${!j.pagado ? `<button class="btn-seña" onclick="openSeña(${j.id})">SEÑA</button>` : ''}
+          ${!j.pagado ? `<button class="btn-pay" onclick="confirmPaid(${j.id})">TODO ✓</button>` : ''}
           ${!j.pagado ? `<button class="btn-wa" onclick="openWhatsApp(${j.id})">WA</button>` : ''}
           <button class="btn-sm" onclick="openEdit(${j.id})" title="Editar" aria-label="Editar trabajo">${icon('edit', 16)}</button>
           <button class="btn-sm" onclick="confirmDelete(${j.id})" title="Eliminar" aria-label="Eliminar trabajo">${icon('trash', 16)}</button>
@@ -1506,8 +1575,8 @@ function renderSummary() {
   const cobrados = monthJobs.filter(j => j.pagado);
   const pendientes = monthJobs.filter(j => !j.pagado);
   const totalFacturado = monthJobs.reduce((s, j) => s + (j.monto || 0), 0);
-  const totalCobrado = cobrados.reduce((s, j) => s + (j.monto || 0), 0);
-  const totalPendiente = pendientes.reduce((s, j) => s + (j.monto || 0), 0);
+  const totalCobrado = cobrados.reduce((s, j) => s + (j.monto || 0), 0) + pendientes.reduce((s, j) => s + getTotalPagado(j), 0);
+  const totalPendiente = pendientes.reduce((s, j) => s + getRestante(j), 0);
 
   const body = document.getElementById('summary-body');
 
@@ -1584,6 +1653,59 @@ function markPaid(id) {
   saveJobs(jobs);
   renderAll();
   showToast('¡Cobrado!', 'ok');
+}
+
+let currentSeñaId = null;
+
+function openSeña(id) {
+  const job = getJobs().find(j => j.id === id);
+  if (!job) return;
+  currentSeñaId = id;
+  const restante = getRestante(job);
+  const pagado = getTotalPagado(job);
+  let info = `Cliente: ${job.cliente}`;
+  if (job.monto > 0) {
+    info += `\nTotal: ${formatCurrency(job.monto)}`;
+    if (pagado > 0) info += ` · Pagó: ${formatCurrency(pagado)}`;
+    info += `\nResta: ${formatCurrency(restante)}`;
+  }
+  document.getElementById('seña-info').textContent = info;
+  document.getElementById('seña-info').style.whiteSpace = 'pre-line';
+  document.getElementById('seña-monto').value = restante > 0 ? restante : '';
+  showModal('seña-modal');
+}
+
+function saveSeña() {
+  if (!currentSeñaId) return;
+  const monto = Number(document.getElementById('seña-monto').value) || 0;
+  if (monto <= 0) {
+    showToast('Ingresá un monto válido.', 'warn');
+    return;
+  }
+
+  const jobs = getJobs();
+  const idx = jobs.findIndex(j => j.id === currentSeñaId);
+  if (idx < 0) return;
+
+  if (!jobs[idx].pagos) jobs[idx].pagos = [];
+  jobs[idx].pagos.push({ monto, fecha: new Date().toISOString().split('T')[0] });
+
+  // Auto-mark as paid if fully covered
+  const totalPagado = getTotalPagado(jobs[idx]);
+  if (jobs[idx].monto > 0 && totalPagado >= jobs[idx].monto) {
+    jobs[idx].pagado = true;
+    jobs[idx].fechaPago = new Date().toISOString().split('T')[0];
+  }
+
+  saveJobs(jobs);
+  hideModal('seña-modal');
+  renderAll();
+
+  if (jobs[idx].pagado) {
+    showToast(`¡Cobrado completo! ${formatCurrency(totalPagado)}`, 'ok');
+  } else {
+    showToast(`Pago de ${formatCurrency(monto)} registrado. Resta: ${formatCurrency(getRestante(jobs[idx]))}`, 'ok');
+  }
 }
 
 function deleteJob(id) {
@@ -2064,8 +2186,8 @@ function openClientHistory(clientName) {
   const cobrados = clientJobs.filter(j => j.pagado);
   const pendientes = clientJobs.filter(j => !j.pagado);
   const totalFacturado = clientJobs.reduce((s, j) => s + (j.monto || 0), 0);
-  const totalCobrado = cobrados.reduce((s, j) => s + (j.monto || 0), 0);
-  const totalPendiente = pendientes.reduce((s, j) => s + (j.monto || 0), 0);
+  const totalCobrado = cobrados.reduce((s, j) => s + (j.monto || 0), 0) + pendientes.reduce((s, j) => s + getTotalPagado(j), 0);
+  const totalPendiente = pendientes.reduce((s, j) => s + getRestante(j), 0);
 
   document.getElementById('client-modal-title').textContent = clientName.toUpperCase();
 
