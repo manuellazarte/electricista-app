@@ -688,6 +688,81 @@
     /* WhatsApp modal */
     .wa-phone-field { margin-bottom: 12px; }
 
+    /* ─── PROFILE SCREEN ─── */
+    #profile-screen {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      padding-bottom: calc(32px + var(--safe-bottom));
+    }
+
+    #profile-screen .title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: var(--text);
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    #profile-screen .subtitle {
+      font-size: 11px;
+      color: var(--faint);
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 44px;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .profile-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 16px 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .profile-card:active { transform: scale(0.96); }
+    .profile-card.accent-yellow:active,
+    .profile-card.accent-yellow:hover { border-color: var(--yellow); }
+    .profile-card.accent-blue:active,
+    .profile-card.accent-blue:hover { border-color: #60a5fa; }
+
+    .profile-card .profile-logo { margin-bottom: 16px; }
+
+    .profile-card .profile-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 2px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .profile-card.accent-yellow .profile-name { color: var(--yellow); }
+    .profile-card.accent-blue .profile-name { color: #60a5fa; }
+
+    .profile-card .profile-members {
+      font-size: 9px;
+      color: var(--faint);
+      letter-spacing: 0.5px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
     /* Client name clickable */
     .job-client-btn {
       font-size: 15px;
@@ -799,9 +874,48 @@
 <body>
 
 <!-- ══════════════════════════════════════
+     PROFILE SELECT SCREEN
+══════════════════════════════════════ -->
+<div id="profile-screen" style="display:none">
+  <div class="title">ELECTRICISTA PRO</div>
+  <div class="subtitle">ELEGÍ TU PERFIL</div>
+
+  <div class="profile-grid">
+    <!-- CHM2 -->
+    <div class="profile-card accent-yellow" onclick="selectProfile('chm2')">
+      <div class="profile-logo">
+        <svg width="100" height="110" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 2 L93 27 L93 77 L50 102 L7 77 L7 27 Z" fill="#1a1a1a" stroke="#f5c518" stroke-width="2.5"/>
+          <path d="M54 18 L42 52 L56 52 L44 92" fill="none" stroke="#f5c518" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.15"/>
+          <text x="50" y="52" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="#f5c518" letter-spacing="2">CHM</text>
+          <text x="72" y="72" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="18" fill="#f5c518" opacity="0.7">2</text>
+          <line x1="28" y1="62" x2="72" y2="62" stroke="#f5c518" stroke-width="1" opacity="0.3"/>
+        </svg>
+      </div>
+      <div class="profile-name">CHM2</div>
+      <div class="profile-members">Chelo · Manuel · Mateo</div>
+    </div>
+
+    <!-- ALM -->
+    <div class="profile-card accent-blue" onclick="selectProfile('alm')">
+      <div class="profile-logo">
+        <svg width="100" height="110" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 2 L93 27 L93 77 L50 102 L7 77 L7 27 Z" fill="#1a1a1a" stroke="#60a5fa" stroke-width="2.5"/>
+          <path d="M54 18 L42 52 L56 52 L44 92" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.15"/>
+          <text x="50" y="56" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="28" fill="#60a5fa" letter-spacing="3">ALM</text>
+          <line x1="28" y1="66" x2="72" y2="66" stroke="#60a5fa" stroke-width="1" opacity="0.3"/>
+        </svg>
+      </div>
+      <div class="profile-name">ALM</div>
+      <div class="profile-members">Andrés · Lucas · Micaela</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      SETUP SCREEN
 ══════════════════════════════════════ -->
-<div id="setup-screen">
+<div id="setup-screen" style="display:none">
   <div class="logo">⚡ ELECTRICISTA PRO</div>
   <div class="sub">CONTROL DE TRABAJOS Y COBROS</div>
 
@@ -828,10 +942,10 @@
   <!-- Header -->
   <div class="app-header">
     <div class="logo-wrap">
-      <span style="font-size:22px">⚡</span>
+      <span id="header-logo" style="display:flex;align-items:center"></span>
       <div>
         <div class="logo-text">ELECTRICISTA PRO</div>
-        <div class="logo-sub">CONTROL DE COBROS</div>
+        <div class="logo-sub" id="header-sub">CONTROL DE COBROS</div>
       </div>
     </div>
     <div class="header-actions">
@@ -1018,6 +1132,13 @@
     </div>
 
     <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+      <div class="field-label" style="margin-bottom:8px">PERFIL</div>
+      <button onclick="switchProfile()" style="background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;padding:10px 14px;cursor:pointer;width:100%;margin-bottom:16px">
+        🔄 Cambiar de perfil
+      </button>
+    </div>
+
+    <div style="padding-top:16px;border-top:1px solid var(--border)">
       <div class="field-label" style="margin-bottom:8px">DATOS</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button onclick="importData()" style="background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;padding:10px 14px;cursor:pointer;flex:1">
@@ -1037,21 +1158,25 @@
 
 <script>
 // ══════════════════════════════════════
-// DATA LAYER
+// DATA LAYER (profile-aware)
 // ══════════════════════════════════════
-const JOBS_KEY = 'elec-jobs-v2';
-const API_KEY_STORE = 'elec-apikey';
-const SETTINGS_KEY = 'elec-settings';
+const PROFILE_KEY = 'elec-profile';
+const API_KEY_STORE = 'elec-apikey'; // shared across profiles
+let currentProfile = null;
 let currentTab = 'pendientes';
 let summaryOffset = 0;
 let currentWaJob = null;
+let lastApiCall = 0; // rate limit throttle
+
+function getJobsKey() { return `${currentProfile}-jobs-v2`; }
+function getSettingsKey() { return `${currentProfile}-settings`; }
 
 function getJobs() {
-  try { return JSON.parse(localStorage.getItem(JOBS_KEY) || '[]'); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(getJobsKey()) || '[]'); } catch { return []; }
 }
 
 function saveJobs(jobs) {
-  localStorage.setItem(JOBS_KEY, JSON.stringify(jobs));
+  localStorage.setItem(getJobsKey(), JSON.stringify(jobs));
 }
 
 function getApiKey() {
@@ -1059,11 +1184,11 @@ function getApiKey() {
 }
 
 function getSettings() {
-  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch { return {}; }
+  try { return JSON.parse(localStorage.getItem(getSettingsKey()) || '{}'); } catch { return {}; }
 }
 
 function saveSettingsData(s) {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  localStorage.setItem(getSettingsKey(), JSON.stringify(s));
 }
 
 function getOverdueDays() {
@@ -1074,6 +1199,49 @@ function isOverdue(job) {
   if (job.pagado) return false;
   const diff = (Date.now() - new Date(job.fecha + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24);
   return diff >= getOverdueDays();
+}
+
+// ══════════════════════════════════════
+// PROFILES
+// ══════════════════════════════════════
+const PROFILES = {
+  chm2: { name: 'CHM2', members: 'Chelo · Manuel · Mateo', color: '#f5c518' },
+  alm:  { name: 'ALM',  members: 'Andrés · Lucas · Micaela', color: '#60a5fa' }
+};
+
+function miniLogoSvg(profile, size = 28) {
+  const p = PROFILES[profile];
+  const col = p.color;
+  const txt = p.name.replace('2', '');
+  const has2 = profile === 'chm2';
+  return `<svg width="${size}" height="${Math.round(size*1.1)}" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 2 L93 27 L93 77 L50 102 L7 77 L7 27 Z" fill="#1a1a1a" stroke="${col}" stroke-width="3"/>
+    <text x="50" y="${has2 ? 56 : 60}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${has2 ? 28 : 30}" fill="${col}" letter-spacing="2">${txt}</text>
+    ${has2 ? `<text x="74" y="74" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="20" fill="${col}" opacity="0.7">2</text>` : ''}
+  </svg>`;
+}
+
+function selectProfile(profile) {
+  currentProfile = profile;
+  localStorage.setItem(PROFILE_KEY, profile);
+  initApp();
+}
+
+function switchProfile() {
+  hideModal('settings-modal');
+  currentProfile = null;
+  localStorage.removeItem(PROFILE_KEY);
+  showScreen('profile');
+}
+
+function showScreen(screen) {
+  document.getElementById('profile-screen').style.display = screen === 'profile' ? 'flex' : 'none';
+  document.getElementById('setup-screen').style.display = screen === 'setup' ? 'flex' : 'none';
+  if (screen === 'app') {
+    document.getElementById('app').classList.add('visible');
+  } else {
+    document.getElementById('app').classList.remove('visible');
+  }
 }
 
 // ══════════════════════════════════════
@@ -1090,14 +1258,32 @@ function setupApp() {
 }
 
 function initApp() {
+  // Step 1: need profile?
+  if (!currentProfile) {
+    const saved = localStorage.getItem(PROFILE_KEY);
+    if (!saved) {
+      showScreen('profile');
+      return;
+    }
+    currentProfile = saved;
+  }
+
+  // Step 2: need API key?
   if (!getApiKey()) {
-    document.getElementById('setup-screen').style.display = 'flex';
-    document.getElementById('app').classList.remove('visible');
+    showScreen('setup');
     return;
   }
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('app').classList.add('visible');
+
+  // Step 3: show app
+  showScreen('app');
+  updateHeaderForProfile();
   renderAll();
+}
+
+function updateHeaderForProfile() {
+  const p = PROFILES[currentProfile];
+  document.getElementById('header-logo').innerHTML = miniLogoSvg(currentProfile, 28);
+  document.getElementById('header-sub').textContent = `${p.name} — CONTROL DE COBROS`;
 }
 
 // ══════════════════════════════════════
@@ -1556,6 +1742,16 @@ async function sendJob() {
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-dots" style="font-size:11px"></span>';
 
+  // Rate limit throttle: min 4s between API calls
+  const now = Date.now();
+  const elapsed = now - lastApiCall;
+  if (elapsed < 4000) {
+    const wait = 4000 - elapsed;
+    showToast(`Esperando ${Math.ceil(wait/1000)}s...`, 'info');
+    await new Promise(r => setTimeout(r, wait));
+  }
+  lastApiCall = Date.now();
+
   const SYSTEM = `Sos un asistente para un electricista independiente argentino. Extraé la info del trabajo y respondé SOLO con JSON válido.
 
 Cuando describan un trabajo:
@@ -1731,7 +1927,7 @@ function exportData() {
   const a = document.createElement('a');
   const date = new Date().toISOString().split('T')[0];
   a.href = url;
-  a.download = `electricista-backup-${date}.json`;
+  a.download = `electricista-${currentProfile}-backup-${date}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast(`📤 Backup exportado (${jobs.length} trabajos)`, 'ok');
@@ -1790,8 +1986,8 @@ function saveSettings() {
 }
 
 function clearAllData() {
-  showConfirm('🗑️', '¿Borrar TODOS los datos?', 'Esta acción no se puede deshacer.', () => {
-    localStorage.removeItem(JOBS_KEY);
+  showConfirm('🗑️', '¿Borrar TODOS los datos?', `Se borran los trabajos de ${PROFILES[currentProfile].name}. No se puede deshacer.`, () => {
+    localStorage.removeItem(getJobsKey());
     hideModal('settings-modal');
     renderAll();
     showToast('Datos borrados.', 'warn');
