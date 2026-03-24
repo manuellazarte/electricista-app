@@ -1742,11 +1742,11 @@ async function sendJob() {
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-dots" style="font-size:11px"></span>';
 
-  // Rate limit throttle: min 4s between API calls
+  // Rate limit throttle: min 6s between API calls
   const now = Date.now();
   const elapsed = now - lastApiCall;
-  if (elapsed < 4000) {
-    const wait = 4000 - elapsed;
+  if (elapsed < 6000) {
+    const wait = 6000 - elapsed;
     showToast(`Esperando ${Math.ceil(wait/1000)}s...`, 'info');
     await new Promise(r => setTimeout(r, wait));
   }
@@ -1769,29 +1769,64 @@ Si NO es un trabajo (es una pregunta o saludo):
 {"error":"no_trabajo","mensaje":"respuesta breve en español"}`;
 
   const apiKey = getApiKey();
+  const models = ['gemini-2.0-flash-lite', 'gemini-1.5-flash'];
+  const bodyPayload = JSON.stringify({
+    contents: [{ parts: [{ text: SYSTEM + '\n\nUsuario: ' + text }] }],
+    generationConfig: { responseMimeType: 'application/json' }
+  });
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: SYSTEM + '\n\nUsuario: ' + text }] }],
-        generationConfig: { responseMimeType: 'application/json' }
-      })
-    });
+    let data = null;
 
-    if (!res.ok) {
+    for (const model of models) {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: bodyPayload
+      });
+
       if (res.status === 429) {
-        showToast('Demasiadas consultas. Esperá un minuto.', 'warn');
-      } else if (res.status === 400 || res.status === 403) {
-        showToast('API Key inválida. Revisá en Configuración.', 'error');
-      } else {
-        showToast(`Error del servidor (${res.status})`, 'error');
+        // First 429: wait 10s and retry same model
+        showToast('Muchas consultas, reintentando en 10s...', 'info');
+        await new Promise(r => setTimeout(r, 10000));
+        lastApiCall = Date.now();
+
+        const retry = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: bodyPayload
+        });
+
+        if (retry.status === 429) {
+          // Try next model (fallback)
+          continue;
+        }
+        if (!retry.ok) {
+          showToast(`Error del servidor (${retry.status})`, 'error');
+          return;
+        }
+        data = await retry.json();
+        break;
       }
-      return;
+
+      if (res.status === 400 || res.status === 403) {
+        showToast('API Key inválida. Revisá en Configuración.', 'error');
+        return;
+      }
+
+      if (!res.ok) {
+        showToast(`Error del servidor (${res.status})`, 'error');
+        return;
+      }
+
+      data = await res.json();
+      break;
     }
 
-    const data = await res.json();
+    if (!data) {
+      showToast('Servicio ocupado. Esperá 1 minuto e intentá de nuevo.', 'warn');
+      return;
+    }
     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     let parsed;
