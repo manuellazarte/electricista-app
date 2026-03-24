@@ -1702,7 +1702,7 @@ function saveSeña() {
   renderAll();
 
   if (jobs[idx].pagado) {
-    showToast(`¡Cobrado completo! ${formatCurrency(totalPagado)}`, 'ok');
+    showToast(`¡Cobrado completo! ${formatCurrency(jobs[idx].monto)}`, 'ok');
   } else {
     showToast(`Pago de ${formatCurrency(monto)} registrado. Resta: ${formatCurrency(getRestante(jobs[idx]))}`, 'ok');
   }
