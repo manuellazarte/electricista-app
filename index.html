@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Electricista Pro</title>
+
+  <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Electricista%20Pro%22%2C%22short_name%22%3A%22ElecPro%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f0f0f%22%2C%22theme_color%22%3A%22%23f5c518%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520100%2520100'%253E%253Crect%2520width%3D'100'%2520height%3D'100'%2520rx%3D'20'%2520fill%3D'%25230f0f0f'%2F%253E%253Ctext%2520y%3D'.9em'%2520font-size%3D'75'%2520x%3D'12'%253E%25E2%259A%25A1%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
+
+  <meta name="theme-color" content="#f5c518" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ElecPro" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --border: #252525;
+      --border-hover: #333;
+      --yellow: #f5c518;
+      --yellow-light: #ffd740;
+      --yellow-dim: #3a2e00;
+      --green: #4ade80;
+      --green-dim: #003a12;
+      --red: #f87171;
+      --red-dim: #5a1a1a;
+      --blue: #818cf8;
+      --text: #f0f0f0;
+      --muted: #888;
+      --faint: #444;
+      --very-faint: #2a2a2a;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* ─── SETUP SCREEN ─── */
+    #setup-screen {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      padding-bottom: calc(32px + var(--safe-bottom));
+    }
+
+    #setup-screen .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      color: var(--yellow);
+      letter-spacing: 3px;
+      text-align: center;
+    }
+
+    #setup-screen .sub {
+      font-size: 11px;
+      color: var(--faint);
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    #setup-screen .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    #setup-screen h2 {
+      font-size: 13px;
+      color: var(--yellow);
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    #setup-screen p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    #setup-screen p a {
+      color: var(--yellow);
+      text-decoration: none;
+    }
+
+    .field-label {
+      font-size: 10px;
+      color: var(--faint);
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .text-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 12px 14px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .text-input:focus { border-color: var(--yellow); }
+    .text-input::placeholder { color: var(--very-faint); }
+
+    .btn-primary {
+      background: var(--yellow);
+      color: var(--bg);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      font-size: 14px;
+      padding: 14px;
+      width: 100%;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary:active { background: var(--yellow-light); transform: scale(0.98); }
+
+    /* ─── MAIN APP ─── */
+    #app { display: none; flex-direction: column; min-height: 100dvh; }
+    #app.visible { display: flex; }
+
+    /* Header */
+    .app-header {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      padding-top: calc(16px + var(--safe-top));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .app-header .logo-wrap { display: flex; align-items: center; gap: 10px; }
+    .app-header .logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--yellow); letter-spacing: 2px; }
+    .app-header .logo-sub { font-size: 9px; color: var(--faint); letter-spacing: 1px; }
+
+    .header-actions { display: flex; gap: 6px; }
+
+    .btn-icon {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-icon:active { border-color: var(--yellow); color: var(--yellow); }
+
+    /* Scroll area */
+    .app-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      padding-bottom: calc(200px + var(--safe-bottom));
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      color: var(--faint);
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+    }
+
+    .stat-amount {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-count { font-size: 10px; color: var(--faint); }
+
+    /* Monthly summary card */
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .summary-card.visible { display: block; }
+
+    .summary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .summary-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      color: var(--yellow);
+      letter-spacing: 1px;
+    }
+
+    .summary-nav {
+      display: flex;
+      gap: 4px;
+    }
+
+    .summary-nav button {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    .summary-nav button:active { border-color: var(--yellow); color: var(--yellow); }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--very-faint);
+      font-size: 12px;
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row .label { color: var(--muted); }
+    .summary-row .value { font-weight: 500; }
+
+    /* Search bar */
+    .search-wrap {
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .search-wrap input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 10px 14px 10px 32px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-wrap input:focus { border-color: var(--yellow); }
+    .search-wrap input::placeholder { color: var(--faint); }
+
+    .search-wrap .icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: var(--faint);
+      pointer-events: none;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+      gap: 0;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--faint);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .tab-btn.active { color: var(--yellow); border-bottom-color: var(--yellow); }
+
+    .tab-badge {
+      background: var(--yellow);
+      color: var(--bg);
+      border-radius: 10px;
+      padding: 1px 5px;
+      font-size: 9px;
+      margin-left: 5px;
+      font-weight: 500;
+    }
+
+    /* Job cards */
+    .job-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 16px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .job-card.overdue {
+      border-left: 3px solid var(--red);
+    }
+
+    .job-card:active { border-color: var(--border-hover); }
+
+    .job-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .job-client {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .chip {
+      border-radius: 20px;
+      padding: 2px 9px;
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .chip-pending { background: #1a1200; color: var(--yellow); border: 1px solid var(--yellow-dim); }
+    .chip-paid { background: #001a09; color: var(--green); border: 1px solid var(--green-dim); }
+    .chip-overdue { background: #2e1a1a; color: var(--red); border: 1px solid var(--red-dim); }
+
+    .job-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .job-overdue-tag {
+      font-size: 10px;
+      color: var(--red);
+      margin-bottom: 8px;
+    }
+
+    .job-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .job-amount {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .job-date { font-size: 10px; color: var(--faint); }
+
+    .job-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .btn-pay {
+      background: var(--yellow);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      font-size: 11px;
+      padding: 7px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-pay:active { background: var(--yellow-light); transform: scale(0.96); }
+
+    .btn-wa {
+      background: #1a2e1a;
+      border: 1px solid #25D366;
+      border-radius: 6px;
+      color: #25D366;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 6px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-wa:active { background: #25D366; color: #000; }
+
+    .btn-sm {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 6px 9px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm:active { border-color: var(--yellow); }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--faint);
+    }
+
+    .empty-state .emoji { font-size: 44px; margin-bottom: 12px; }
+    .empty-state p { font-size: 12px; line-height: 1.6; }
+
+    /* ─── BOTTOM INPUT ─── */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 16px;
+      padding-bottom: calc(16px + var(--safe-bottom));
+      z-index: 50;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0;
+    }
+
+    .chat-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-right: none;
+      border-radius: 10px 0 0 10px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 13px 14px;
+      flex: 1;
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+
+    .chat-input:focus { border-color: var(--yellow); }
+    .chat-input::placeholder { color: var(--faint); font-size: 11px; }
+
+    .btn-mic {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: none;
+      border-right: none;
+      color: var(--muted);
+      font-size: 18px;
+      padding: 0 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+    }
+
+    .btn-mic.recording {
+      color: var(--red);
+      animation: pulse-mic 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse-mic {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .btn-send {
+      background: var(--yellow);
+      border: none;
+      border-radius: 0 10px 10px 0;
+      color: var(--bg);
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      font-size: 13px;
+      padding: 13px 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn-send:active { background: var(--yellow-light); }
+    .btn-send:disabled { opacity: 0.4; }
+
+    .input-hints {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .input-hint {
+      font-size: 10px;
+      color: var(--very-faint);
+    }
+
+    .btn-manual {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--faint);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    .btn-manual:active { border-color: var(--yellow); color: var(--yellow); }
+
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: flex-end;
+      z-index: 100;
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      padding: 28px 20px;
+      padding-bottom: calc(28px + var(--safe-bottom));
+      width: 100%;
+      max-height: 90dvh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      color: var(--yellow);
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+
+    .modal-field { margin-bottom: 16px; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .modal-actions .btn-primary { margin-top: 0; }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 14px;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .btn-secondary:active { border-color: var(--yellow); }
+
+    /* ─── CONFIRM OVERLAY ─── */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 150;
+      padding: 20px;
+    }
+
+    .confirm-overlay.visible { display: flex; }
+
+    .confirm-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      max-width: 340px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .confirm-box .emoji { font-size: 40px; margin-bottom: 12px; }
+    .confirm-box .msg { font-size: 14px; color: var(--text); margin-bottom: 6px; font-weight: 500; }
+    .confirm-box .sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+    .confirm-box .actions { display: flex; gap: 10px; }
+    .confirm-box .actions button { flex: 1; padding: 12px; border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; }
+
+    /* ─── TOAST ─── */
+    #toast {
+      position: fixed;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      z-index: 200;
+      opacity: 0;
+      transition: all 0.3s;
+      white-space: nowrap;
+      pointer-events: none;
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.ok { background: #1a2e1a; border: 1px solid var(--green); color: var(--green); }
+    #toast.info { background: #1a1a2e; border: 1px solid var(--blue); color: var(--blue); }
+    #toast.warn { background: #2e2a1a; border: 1px solid var(--yellow); color: var(--yellow); }
+    #toast.error { background: #2e1a1a; border: 1px solid var(--red); color: var(--red); }
+
+    .loading-dots::after {
+      content: '...';
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+
+    /* WhatsApp modal */
+    .wa-phone-field { margin-bottom: 12px; }
+
+    /* Client name clickable */
+    .job-client-btn {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      text-align: left;
+      text-decoration: underline;
+      text-decoration-color: var(--very-faint);
+      text-underline-offset: 3px;
+      transition: text-decoration-color 0.2s;
+    }
+
+    .job-client-btn:active { text-decoration-color: var(--yellow); }
+
+    /* Client history modal */
+    .client-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .client-stat {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    .client-stat .val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .client-stat .lbl {
+      font-size: 9px;
+      color: var(--faint);
+      letter-spacing: 0.5px;
+    }
+
+    .client-job-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--very-faint);
+      font-size: 12px;
+      gap: 10px;
+    }
+
+    .client-job-item:last-child { border-bottom: none; }
+
+    .client-job-left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .client-job-left .desc {
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .client-job-left .date {
+      font-size: 10px;
+      color: var(--faint);
+      margin-top: 2px;
+    }
+
+    .client-job-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .client-job-right .amount {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .client-job-right .status {
+      font-size: 9px;
+      margin-top: 2px;
+    }
+
+    .client-info-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--very-faint); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SETUP SCREEN
+══════════════════════════════════════ -->
+<div id="setup-screen">
+  <div class="logo">⚡ ELECTRICISTA PRO</div>
+  <div class="sub">CONTROL DE TRABAJOS Y COBROS</div>
+
+  <div class="card">
+    <h2>CONFIGURACIÓN INICIAL</h2>
+    <p>
+      Para que la IA entienda tus trabajos en lenguaje natural necesitás una
+      <strong style="color:var(--yellow)">API Key de Google (Gemini)</strong>.<br><br>
+      Conseguila gratis en
+      <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>
+      → Create API Key → elegí "Default Gemini Project". Se guarda solo en tu celular.
+    </p>
+    <div class="field-label">TU API KEY</div>
+    <input type="password" class="text-input" id="apikey-input" placeholder="AIza..." />
+    <button class="btn-primary" onclick="setupApp()">COMENZAR →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="logo-wrap">
+      <span style="font-size:22px">⚡</span>
+      <div>
+        <div class="logo-text">ELECTRICISTA PRO</div>
+        <div class="logo-sub">CONTROL DE COBROS</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" onclick="exportData()" title="Exportar datos">📤</button>
+      <button class="btn-icon" onclick="openSettings()" title="Configuración">⚙️</button>
+    </div>
+  </div>
+
+  <!-- Scrollable body -->
+  <div class="app-body">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">POR COBRAR</div>
+        <div class="stat-amount" style="color:var(--yellow)" id="stat-pendiente">$0</div>
+        <div class="stat-count" id="stat-pendiente-count">0 trabajos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">YA COBRADO</div>
+        <div class="stat-amount" style="color:var(--green)" id="stat-cobrado">$0</div>
+        <div class="stat-count" id="stat-cobrado-count">0 trabajos</div>
+      </div>
+    </div>
+
+    <!-- Monthly summary -->
+    <div class="summary-card" id="summary-card">
+      <div class="summary-header">
+        <div class="summary-title" id="summary-title">RESUMEN MES</div>
+        <div class="summary-nav">
+          <button onclick="changeSummaryMonth(-1)">◀</button>
+          <button onclick="changeSummaryMonth(1)">▶</button>
+        </div>
+      </div>
+      <div id="summary-body"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-pendientes" onclick="setTab('pendientes')">
+        Pendientes <span class="tab-badge" id="badge-pendientes" style="display:none">0</span>
+      </button>
+      <button class="tab-btn" id="tab-cobrados" onclick="setTab('cobrados')">Cobrados</button>
+      <button class="tab-btn" id="tab-resumen" onclick="setTab('resumen')">Resumen</button>
+    </div>
+
+    <!-- Search -->
+    <div class="search-wrap" id="search-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" placeholder="Buscar cliente o trabajo..." id="search-input" oninput="renderAll()" />
+    </div>
+
+    <!-- List -->
+    <div id="job-list"></div>
+
+  </div>
+
+  <!-- Bottom input bar -->
+  <div class="bottom-bar">
+    <div class="input-row">
+      <input
+        type="text"
+        class="chat-input"
+        id="job-input"
+        placeholder='Ej: "Tablero a García, $45000"'
+        onkeydown="if(event.key==='Enter') sendJob()"
+      />
+      <button class="btn-mic" id="mic-btn" onclick="toggleVoice()" title="Dictar por voz">🎤</button>
+      <button class="btn-send" id="send-btn" onclick="sendJob()">⚡</button>
+    </div>
+    <div class="input-hints">
+      <span class="input-hint">Escribí, dictá por voz, o →</span>
+      <button class="btn-manual" onclick="openManualAdd()">+ MANUAL</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     EDIT / ADD MANUAL MODAL
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="edit-modal" onclick="closeModal(event, 'edit-modal')">
+  <div class="modal">
+    <div class="modal-title" id="edit-modal-title">EDITAR TRABAJO</div>
+    <input type="hidden" id="edit-id" />
+
+    <div class="modal-field">
+      <div class="field-label">CLIENTE *</div>
+      <input type="text" class="text-input" id="edit-cliente" placeholder="Nombre del cliente" />
+    </div>
+    <div class="modal-field">
+      <div class="field-label">DESCRIPCIÓN *</div>
+      <input type="text" class="text-input" id="edit-desc" placeholder="Qué hiciste" />
+    </div>
+    <div class="modal-field">
+      <div class="field-label">MONTO ($)</div>
+      <input type="number" class="text-input" id="edit-monto" placeholder="0" />
+    </div>
+    <div class="modal-field">
+      <div class="field-label">FECHA</div>
+      <input type="date" class="text-input" id="edit-fecha" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" style="flex:1;margin-top:0" id="edit-save-btn" onclick="saveEdit()">GUARDAR</button>
+      <button class="btn-secondary" onclick="hideModal('edit-modal')">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     WHATSAPP MODAL
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="wa-modal" onclick="closeModal(event, 'wa-modal')">
+  <div class="modal">
+    <div class="modal-title">RECORDATORIO POR WHATSAPP</div>
+    <div id="wa-preview" style="font-size:12px;color:var(--muted);line-height:1.6;background:var(--bg);border-radius:8px;padding:14px;margin-bottom:16px;white-space:pre-wrap"></div>
+
+    <div class="wa-phone-field">
+      <div class="field-label">NÚMERO DEL CLIENTE (opcional)</div>
+      <input type="tel" class="text-input" id="wa-phone" placeholder="Ej: 1155667788" />
+      <div style="font-size:10px;color:var(--faint);margin-top:4px">Sin 0 ni 15. Si lo dejás vacío se abre WhatsApp para que elijas el contacto.</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" style="flex:1;margin-top:0;background:#25D366;color:#000" onclick="sendWhatsApp()">ENVIAR POR WHATSAPP</button>
+      <button class="btn-secondary" onclick="hideModal('wa-modal')">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CONFIRM DIALOG
+══════════════════════════════════════ -->
+<div class="confirm-overlay" id="confirm-dialog">
+  <div class="confirm-box">
+    <div class="emoji" id="confirm-emoji">💰</div>
+    <div class="msg" id="confirm-msg"></div>
+    <div class="sub" id="confirm-sub"></div>
+    <div class="actions">
+      <button class="btn-primary" style="margin-top:0" id="confirm-yes">SÍ</button>
+      <button class="btn-secondary" id="confirm-no" onclick="hideConfirm()">NO</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CLIENT HISTORY MODAL
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="client-modal" onclick="closeModal(event, 'client-modal')">
+  <div class="modal">
+    <div class="modal-title" id="client-modal-title">HISTORIAL</div>
+    <div id="client-modal-info"></div>
+    <div id="client-modal-stats"></div>
+    <div style="font-size:11px;color:var(--faint);letter-spacing:1px;margin-bottom:10px">TRABAJOS</div>
+    <div id="client-modal-jobs"></div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn-secondary" onclick="hideModal('client-modal')">CERRAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SETTINGS MODAL
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="settings-modal" onclick="closeModal(event, 'settings-modal')">
+  <div class="modal">
+    <div class="modal-title">CONFIGURACIÓN</div>
+
+    <div class="modal-field">
+      <div class="field-label">API KEY DE GOOGLE (GEMINI)</div>
+      <input type="password" class="text-input" id="settings-apikey" placeholder="AIza..." />
+    </div>
+
+    <div class="modal-field">
+      <div class="field-label">DÍAS PARA MARCAR COMO ATRASADO</div>
+      <input type="number" class="text-input" id="settings-overdue" placeholder="7" />
+      <div style="font-size:10px;color:var(--faint);margin-top:4px">Trabajos pendientes con más de estos días se marcan en rojo</div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn-primary" style="flex:1;margin-top:0" onclick="saveSettings()">GUARDAR</button>
+      <button class="btn-secondary" onclick="hideModal('settings-modal')">CANCELAR</button>
+    </div>
+
+    <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+      <div class="field-label" style="margin-bottom:8px">DATOS</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="importData()" style="background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;padding:10px 14px;cursor:pointer;flex:1">
+          📥 Importar backup
+        </button>
+        <button onclick="clearAllData()" style="background:transparent;border:1px solid var(--red-dim);border-radius:8px;color:var(--red);font-family:'DM Mono',monospace;font-size:12px;padding:10px 14px;cursor:pointer;flex:1">
+          🗑️ Borrar todo
+        </button>
+      </div>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)" />
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// DATA LAYER
+// ══════════════════════════════════════
+const JOBS_KEY = 'elec-jobs-v2';
+const API_KEY_STORE = 'elec-apikey';
+const SETTINGS_KEY = 'elec-settings';
+let currentTab = 'pendientes';
+let summaryOffset = 0;
+let currentWaJob = null;
+
+function getJobs() {
+  try { return JSON.parse(localStorage.getItem(JOBS_KEY) || '[]'); } catch { return []; }
+}
+
+function saveJobs(jobs) {
+  localStorage.setItem(JOBS_KEY, JSON.stringify(jobs));
+}
+
+function getApiKey() {
+  return localStorage.getItem(API_KEY_STORE) || '';
+}
+
+function getSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch { return {}; }
+}
+
+function saveSettingsData(s) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+function getOverdueDays() {
+  return getSettings().overdueDays || 7;
+}
+
+function isOverdue(job) {
+  if (job.pagado) return false;
+  const diff = (Date.now() - new Date(job.fecha + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24);
+  return diff >= getOverdueDays();
+}
+
+// ══════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════
+function setupApp() {
+  const key = document.getElementById('apikey-input').value.trim();
+  if (!key.startsWith('AIza')) {
+    showToast('La API Key debe comenzar con AIza...', 'warn');
+    return;
+  }
+  localStorage.setItem(API_KEY_STORE, key);
+  initApp();
+}
+
+function initApp() {
+  if (!getApiKey()) {
+    document.getElementById('setup-screen').style.display = 'flex';
+    document.getElementById('app').classList.remove('visible');
+    return;
+  }
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  renderAll();
+}
+
+// ══════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════
+function formatCurrency(n) {
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency', currency: 'ARS', maximumFractionDigits: 0
+  }).format(n);
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T12:00:00');
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' });
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function daysSince(iso) {
+  return Math.floor((Date.now() - new Date(iso + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function renderAll() {
+  const jobs = getJobs();
+  const searchQ = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+  const pending = jobs.filter(j => !j.pagado);
+  const paid = jobs.filter(j => j.pagado);
+
+  const totalPend = pending.reduce((s, j) => s + (j.monto || 0), 0);
+  const totalPaid = paid.reduce((s, j) => s + (j.monto || 0), 0);
+
+  document.getElementById('stat-pendiente').textContent = formatCurrency(totalPend);
+  document.getElementById('stat-cobrado').textContent = formatCurrency(totalPaid);
+  document.getElementById('stat-pendiente-count').textContent = `${pending.length} trabajo${pending.length !== 1 ? 's' : ''}`;
+  document.getElementById('stat-cobrado-count').textContent = `${paid.length} trabajo${paid.length !== 1 ? 's' : ''}`;
+
+  const badge = document.getElementById('badge-pendientes');
+  if (pending.length > 0) {
+    badge.textContent = pending.length;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Summary card visibility
+  const summaryCard = document.getElementById('summary-card');
+  const searchWrap = document.getElementById('search-wrap');
+
+  if (currentTab === 'resumen') {
+    summaryCard.classList.add('visible');
+    searchWrap.style.display = 'none';
+    renderSummary();
+    document.getElementById('job-list').innerHTML = '';
+    return;
+  } else {
+    summaryCard.classList.remove('visible');
+    searchWrap.style.display = 'block';
+  }
+
+  let lista = currentTab === 'pendientes' ? pending : paid;
+
+  // Sort: overdue first for pending
+  if (currentTab === 'pendientes') {
+    lista.sort((a, b) => {
+      const aOv = isOverdue(a) ? 0 : 1;
+      const bOv = isOverdue(b) ? 0 : 1;
+      if (aOv !== bOv) return aOv - bOv;
+      return new Date(b.fecha) - new Date(a.fecha);
+    });
+  }
+
+  // Search filter
+  if (searchQ) {
+    lista = lista.filter(j =>
+      (j.cliente || '').toLowerCase().includes(searchQ) ||
+      (j.descripcion || '').toLowerCase().includes(searchQ)
+    );
+  }
+
+  const container = document.getElementById('job-list');
+
+  if (lista.length === 0) {
+    const emptySearch = searchQ ? true : false;
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">${emptySearch ? '🔍' : (currentTab === 'pendientes' ? '🎉' : '📋')}</div>
+        <p>${emptySearch
+          ? 'No se encontraron resultados.'
+          : (currentTab === 'pendientes'
+            ? 'No hay trabajos pendientes de cobro.<br>¡Todo al día!'
+            : 'Todavía no hay trabajos cobrados.')
+        }</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = lista.map(j => {
+    const overdue = isOverdue(j);
+    const days = daysSince(j.fecha);
+    return `
+    <div class="job-card ${overdue ? 'overdue' : ''}">
+      <div class="job-top">
+        <button class="job-client-btn" onclick="openClientHistory('${escHtml(j.cliente).replace(/'/g, "\\'")}')">${escHtml(j.cliente)}</button>
+        <span class="chip ${j.pagado ? 'chip-paid' : (overdue ? 'chip-overdue' : 'chip-pending')}">
+          ${j.pagado ? 'COBRADO' : (overdue ? 'ATRASADO' : 'PENDIENTE')}
+        </span>
+      </div>
+      <div class="job-desc">${escHtml(j.descripcion)}</div>
+      ${overdue ? `<div class="job-overdue-tag">⚠️ Hace ${days} días — sin cobrar</div>` : ''}
+      <div class="job-bottom">
+        <div>
+          <div class="job-amount" style="color:${j.pagado ? 'var(--green)' : (overdue ? 'var(--red)' : 'var(--yellow)')}">
+            ${j.monto > 0 ? formatCurrency(j.monto) : '—'}
+          </div>
+          <div class="job-date">${formatDate(j.fecha)}${j.pagado && j.fechaPago ? ' · cobrado ' + formatDate(j.fechaPago) : ''}</div>
+        </div>
+        <div class="job-actions">
+          ${!j.pagado ? `<button class="btn-pay" onclick="confirmPaid(${j.id})">COBRÉ ✓</button>` : ''}
+          ${!j.pagado ? `<button class="btn-wa" onclick="openWhatsApp(${j.id})">WA</button>` : ''}
+          <button class="btn-sm" onclick="openEdit(${j.id})" title="Editar">✏️</button>
+          <button class="btn-sm" onclick="confirmDelete(${j.id})" title="Eliminar">🗑️</button>
+        </div>
+      </div>
+    </div>
+  `;}).join('');
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-pendientes').classList.toggle('active', tab === 'pendientes');
+  document.getElementById('tab-cobrados').classList.toggle('active', tab === 'cobrados');
+  document.getElementById('tab-resumen').classList.toggle('active', tab === 'resumen');
+  renderAll();
+}
+
+// ══════════════════════════════════════
+// MONTHLY SUMMARY
+// ══════════════════════════════════════
+function changeSummaryMonth(dir) {
+  summaryOffset += dir;
+  renderSummary();
+}
+
+function renderSummary() {
+  const now = new Date();
+  const targetDate = new Date(now.getFullYear(), now.getMonth() + summaryOffset, 1);
+  const year = targetDate.getFullYear();
+  const month = targetDate.getMonth();
+
+  const monthName = targetDate.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  document.getElementById('summary-title').textContent = monthName.toUpperCase();
+
+  const jobs = getJobs();
+  const monthJobs = jobs.filter(j => {
+    const d = new Date(j.fecha + 'T12:00:00');
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+
+  const total = monthJobs.length;
+  const cobrados = monthJobs.filter(j => j.pagado);
+  const pendientes = monthJobs.filter(j => !j.pagado);
+  const totalFacturado = monthJobs.reduce((s, j) => s + (j.monto || 0), 0);
+  const totalCobrado = cobrados.reduce((s, j) => s + (j.monto || 0), 0);
+  const totalPendiente = pendientes.reduce((s, j) => s + (j.monto || 0), 0);
+
+  const body = document.getElementById('summary-body');
+
+  if (total === 0) {
+    body.innerHTML = `<div style="text-align:center;padding:20px;color:var(--faint);font-size:12px">Sin trabajos este mes</div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="summary-row">
+      <span class="label">Total trabajos</span>
+      <span class="value">${total}</span>
+    </div>
+    <div class="summary-row">
+      <span class="label">Facturado</span>
+      <span class="value" style="color:var(--text)">${formatCurrency(totalFacturado)}</span>
+    </div>
+    <div class="summary-row">
+      <span class="label">Cobrado</span>
+      <span class="value" style="color:var(--green)">${formatCurrency(totalCobrado)}</span>
+    </div>
+    <div class="summary-row">
+      <span class="label">Pendiente</span>
+      <span class="value" style="color:var(--yellow)">${formatCurrency(totalPendiente)}</span>
+    </div>
+    <div class="summary-row">
+      <span class="label">Tasa de cobro</span>
+      <span class="value">${total > 0 ? Math.round((cobrados.length / total) * 100) : 0}%</span>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════
+// CONFIRM DIALOGS
+// ══════════════════════════════════════
+function showConfirm(emoji, msg, sub, onYes) {
+  document.getElementById('confirm-emoji').textContent = emoji;
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-sub').textContent = sub;
+  const yesBtn = document.getElementById('confirm-yes');
+  yesBtn.onclick = () => { hideConfirm(); onYes(); };
+  document.getElementById('confirm-dialog').classList.add('visible');
+}
+
+function hideConfirm() {
+  document.getElementById('confirm-dialog').classList.remove('visible');
+}
+
+function confirmPaid(id) {
+  const job = getJobs().find(j => j.id === id);
+  if (!job) return;
+  showConfirm('💰', `¿Cobraste a ${job.cliente}?`,
+    job.monto > 0 ? `Monto: ${formatCurrency(job.monto)}` : 'Sin monto registrado',
+    () => markPaid(id));
+}
+
+function confirmDelete(id) {
+  const job = getJobs().find(j => j.id === id);
+  if (!job) return;
+  showConfirm('🗑️', '¿Eliminar este trabajo?',
+    `${job.cliente} — ${job.descripcion}`,
+    () => deleteJob(id));
+}
+
+// ══════════════════════════════════════
+// JOB ACTIONS
+// ══════════════════════════════════════
+function markPaid(id) {
+  const jobs = getJobs();
+  const idx = jobs.findIndex(j => j.id === id);
+  if (idx < 0) return;
+  jobs[idx].pagado = true;
+  jobs[idx].fechaPago = new Date().toISOString().split('T')[0];
+  saveJobs(jobs);
+  renderAll();
+  showToast('💰 ¡Cobrado!', 'ok');
+}
+
+function deleteJob(id) {
+  saveJobs(getJobs().filter(j => j.id !== id));
+  renderAll();
+  showToast('Trabajo eliminado.', 'warn');
+}
+
+// ══════════════════════════════════════
+// EDIT / ADD MANUAL
+// ══════════════════════════════════════
+function openEdit(id) {
+  const job = getJobs().find(j => j.id === id);
+  if (!job) return;
+  document.getElementById('edit-modal-title').textContent = 'EDITAR TRABAJO';
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-cliente').value = job.cliente;
+  document.getElementById('edit-desc').value = job.descripcion;
+  document.getElementById('edit-monto').value = job.monto;
+  document.getElementById('edit-fecha').value = job.fecha;
+  document.getElementById('edit-save-btn').textContent = 'GUARDAR';
+  showModal('edit-modal');
+}
+
+function openManualAdd() {
+  document.getElementById('edit-modal-title').textContent = 'AGREGAR MANUAL';
+  document.getElementById('edit-id').value = '';
+  document.getElementById('edit-cliente').value = '';
+  document.getElementById('edit-desc').value = '';
+  document.getElementById('edit-monto').value = '';
+  document.getElementById('edit-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('edit-save-btn').textContent = 'AGREGAR';
+  showModal('edit-modal');
+}
+
+function saveEdit() {
+  const idVal = document.getElementById('edit-id').value;
+  const cliente = document.getElementById('edit-cliente').value.trim();
+  const desc = document.getElementById('edit-desc').value.trim();
+  const monto = Number(document.getElementById('edit-monto').value) || 0;
+  const fecha = document.getElementById('edit-fecha').value || new Date().toISOString().split('T')[0];
+
+  if (!cliente || !desc) {
+    showToast('Completá cliente y descripción.', 'warn');
+    return;
+  }
+
+  const jobs = getJobs();
+
+  if (idVal) {
+    // Edit existing
+    const idx = jobs.findIndex(j => j.id === Number(idVal));
+    if (idx < 0) return;
+    jobs[idx].cliente = cliente;
+    jobs[idx].descripcion = desc;
+    jobs[idx].monto = monto;
+    jobs[idx].fecha = fecha;
+    showToast('Trabajo actualizado.', 'ok');
+  } else {
+    // New manual
+    jobs.unshift({
+      id: Date.now(),
+      cliente,
+      descripcion: desc,
+      monto,
+      fecha,
+      pagado: false,
+      creadoEn: new Date().toISOString()
+    });
+    currentTab = 'pendientes';
+    setTab('pendientes');
+    showToast(`✅ Trabajo de ${cliente} registrado`, 'ok');
+  }
+
+  saveJobs(jobs);
+  hideModal('edit-modal');
+  renderAll();
+}
+
+// ══════════════════════════════════════
+// WHATSAPP
+// ══════════════════════════════════════
+function openWhatsApp(id) {
+  const job = getJobs().find(j => j.id === id);
+  if (!job) return;
+  currentWaJob = job;
+
+  const msg = buildWaMessage(job);
+  document.getElementById('wa-preview').textContent = msg;
+  document.getElementById('wa-phone').value = job.telefono || '';
+  showModal('wa-modal');
+}
+
+function buildWaMessage(job) {
+  const days = daysSince(job.fecha);
+  let msg = `Hola, te escribo por el trabajo de electricidad`;
+  if (job.descripcion) msg += ` (${job.descripcion})`;
+  if (job.fecha) msg += ` del ${formatDate(job.fecha)}`;
+  msg += `.`;
+  if (job.monto > 0) msg += `\nEl monto es ${formatCurrency(job.monto)}.`;
+  if (days > 3) msg += `\nYa pasaron ${days} días.`;
+  msg += `\n¿Podemos coordinar el pago? ¡Gracias!`;
+  return msg;
+}
+
+function sendWhatsApp() {
+  if (!currentWaJob) return;
+  const phone = document.getElementById('wa-phone').value.trim().replace(/\D/g, '');
+  const msg = encodeURIComponent(buildWaMessage(currentWaJob));
+
+  // Save phone to job if provided
+  if (phone) {
+    const jobs = getJobs();
+    const idx = jobs.findIndex(j => j.id === currentWaJob.id);
+    if (idx >= 0) {
+      jobs[idx].telefono = phone;
+      saveJobs(jobs);
+    }
+  }
+
+  const url = phone
+    ? `https://wa.me/549${phone}?text=${msg}`
+    : `https://api.whatsapp.com/send?text=${msg}`;
+
+  window.open(url, '_blank');
+  hideModal('wa-modal');
+}
+
+// ══════════════════════════════════════
+// VOICE INPUT (Web Speech API)
+// ══════════════════════════════════════
+let recognition = null;
+let isRecording = false;
+
+function initSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'es-AR';
+  r.interimResults = true;
+  r.continuous = false;
+  r.maxAlternatives = 1;
+
+  r.onresult = (e) => {
+    let transcript = '';
+    for (let i = 0; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    document.getElementById('job-input').value = transcript;
+  };
+
+  r.onend = () => {
+    isRecording = false;
+    document.getElementById('mic-btn').classList.remove('recording');
+    // Auto-send if there's text
+    const text = document.getElementById('job-input').value.trim();
+    if (text) {
+      sendJob();
+    }
+  };
+
+  r.onerror = (e) => {
+    isRecording = false;
+    document.getElementById('mic-btn').classList.remove('recording');
+    if (e.error === 'not-allowed') {
+      showToast('Permití el micrófono en el navegador', 'warn');
+    } else if (e.error !== 'aborted') {
+      showToast('No se pudo captar la voz', 'warn');
+    }
+  };
+
+  return r;
+}
+
+function toggleVoice() {
+  if (!recognition) {
+    recognition = initSpeech();
+  }
+
+  if (!recognition) {
+    showToast('Tu navegador no soporta dictado por voz', 'error');
+    return;
+  }
+
+  if (isRecording) {
+    recognition.stop();
+    isRecording = false;
+    document.getElementById('mic-btn').classList.remove('recording');
+  } else {
+    document.getElementById('job-input').value = '';
+    try {
+      recognition.start();
+      isRecording = true;
+      document.getElementById('mic-btn').classList.add('recording');
+      showToast('🎤 Hablá ahora...', 'info');
+    } catch (e) {
+      showToast('Error al iniciar micrófono', 'error');
+    }
+  }
+}
+
+// ══════════════════════════════════════
+// AI — SEND JOB
+// ══════════════════════════════════════
+const today = new Date().toISOString().split('T')[0];
+
+async function sendJob() {
+  const input = document.getElementById('job-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-dots" style="font-size:11px"></span>';
+
+  const SYSTEM = `Sos un asistente para un electricista independiente argentino. Extraé la info del trabajo y respondé SOLO con JSON válido.
+
+Cuando describan un trabajo:
+{"cliente":"nombre","descripcion":"descripción breve del trabajo","monto":0,"fecha":"YYYY-MM-DD"}
+
+Reglas:
+- Si no mencionan monto, poné 0
+- Si no mencionan fecha, usá la fecha de hoy: ${today}
+- Si mencionan "ayer", "la semana pasada", etc., calculá la fecha
+- "lucas" o "k" = miles (ej: "30 lucas" = 30000)
+- Extraé el nombre del cliente aunque esté informal (ej: "el flaco Pérez" → "Pérez")
+- La descripción debe ser breve y técnica
+
+Si NO es un trabajo (es una pregunta o saludo):
+{"error":"no_trabajo","mensaje":"respuesta breve en español"}`;
+
+  const apiKey = getApiKey();
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: SYSTEM + '\n\nUsuario: ' + text }] }],
+        generationConfig: { responseMimeType: 'application/json' }
+      })
+    });
+
+    if (!res.ok) {
+      if (res.status === 429) {
+        showToast('Demasiadas consultas. Esperá un minuto.', 'warn');
+      } else if (res.status === 400 || res.status === 403) {
+        showToast('API Key inválida. Revisá en Configuración.', 'error');
+      } else {
+        showToast(`Error del servidor (${res.status})`, 'error');
+      }
+      return;
+    }
+
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { parsed = null; }
+
+    if (!parsed) {
+      showToast('No pude entender la respuesta. Intentá de nuevo.', 'warn');
+      return;
+    }
+
+    if (parsed.error === 'no_trabajo') {
+      showToast(parsed.mensaje || 'Describí el trabajo con más detalle.', 'info');
+      return;
+    }
+
+    if (parsed.cliente && parsed.descripcion) {
+      const jobs = getJobs();
+      jobs.unshift({
+        id: Date.now(),
+        cliente: parsed.cliente,
+        descripcion: parsed.descripcion,
+        monto: Number(parsed.monto) || 0,
+        fecha: parsed.fecha || today,
+        pagado: false,
+        creadoEn: new Date().toISOString()
+      });
+      saveJobs(jobs);
+      input.value = '';
+      currentTab = 'pendientes';
+      setTab('pendientes');
+      showToast(`✅ ${parsed.cliente} — ${formatCurrency(parsed.monto || 0)}`, 'ok');
+    } else {
+      showToast('Describí el trabajo con más detalle.', 'warn');
+    }
+
+  } catch (e) {
+    showToast('Sin conexión o error de red.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⚡';
+  }
+}
+
+// ══════════════════════════════════════
+// CLIENT HISTORY
+// ══════════════════════════════════════
+function openClientHistory(clientName) {
+  const jobs = getJobs();
+  const clientJobs = jobs.filter(j =>
+    (j.cliente || '').toLowerCase() === clientName.toLowerCase()
+  );
+
+  if (clientJobs.length === 0) return;
+
+  // Get client info (phone, address from most recent job that has them)
+  const withPhone = clientJobs.find(j => j.telefono);
+  const phone = withPhone ? withPhone.telefono : '';
+
+  const totalJobs = clientJobs.length;
+  const cobrados = clientJobs.filter(j => j.pagado);
+  const pendientes = clientJobs.filter(j => !j.pagado);
+  const totalFacturado = clientJobs.reduce((s, j) => s + (j.monto || 0), 0);
+  const totalCobrado = cobrados.reduce((s, j) => s + (j.monto || 0), 0);
+  const totalPendiente = pendientes.reduce((s, j) => s + (j.monto || 0), 0);
+
+  document.getElementById('client-modal-title').textContent = clientName.toUpperCase();
+
+  // Info row (phone if exists)
+  let infoHtml = '';
+  if (phone) {
+    infoHtml += `<div class="client-info-row">📱 ${escHtml(phone)}
+      <button class="btn-wa" style="font-size:10px;padding:4px 8px" onclick="window.open('https://wa.me/549${phone}','_blank')">WA</button>
+    </div>`;
+  }
+  infoHtml += `<div class="client-info-row">📋 ${totalJobs} trabajo${totalJobs !== 1 ? 's' : ''} en total</div>`;
+  document.getElementById('client-modal-info').innerHTML = infoHtml;
+
+  // Stats
+  document.getElementById('client-modal-stats').innerHTML = `
+    <div class="client-stats">
+      <div class="client-stat">
+        <div class="val" style="color:var(--text)">${formatCurrency(totalFacturado)}</div>
+        <div class="lbl">FACTURADO</div>
+      </div>
+      <div class="client-stat">
+        <div class="val" style="color:var(--green)">${formatCurrency(totalCobrado)}</div>
+        <div class="lbl">COBRADO</div>
+      </div>
+      <div class="client-stat">
+        <div class="val" style="color:${totalPendiente > 0 ? 'var(--yellow)' : 'var(--green)'}">${formatCurrency(totalPendiente)}</div>
+        <div class="lbl">PENDIENTE</div>
+      </div>
+    </div>
+  `;
+
+  // Jobs list (sorted by date, newest first)
+  const sorted = [...clientJobs].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  document.getElementById('client-modal-jobs').innerHTML = sorted.map(j => `
+    <div class="client-job-item">
+      <div class="client-job-left">
+        <div class="desc">${escHtml(j.descripcion)}</div>
+        <div class="date">${formatDate(j.fecha)}${j.pagado && j.fechaPago ? ' · cobrado ' + formatDate(j.fechaPago) : ''}</div>
+      </div>
+      <div class="client-job-right">
+        <div class="amount" style="color:${j.pagado ? 'var(--green)' : 'var(--yellow)'}">${j.monto > 0 ? formatCurrency(j.monto) : '—'}</div>
+        <div class="status" style="color:${j.pagado ? 'var(--green)' : 'var(--yellow)'}">${j.pagado ? 'COBRADO' : 'PENDIENTE'}</div>
+      </div>
+    </div>
+  `).join('');
+
+  showModal('client-modal');
+}
+
+// ══════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════
+function exportData() {
+  const jobs = getJobs();
+  if (jobs.length === 0) {
+    showToast('No hay datos para exportar.', 'info');
+    return;
+  }
+
+  const data = {
+    version: 2,
+    exportDate: new Date().toISOString(),
+    jobs: jobs,
+    settings: getSettings()
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `electricista-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`📤 Backup exportado (${jobs.length} trabajos)`, 'ok');
+}
+
+function importData() {
+  document.getElementById('import-file').click();
+}
+
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.jobs && Array.isArray(data.jobs)) {
+        const existing = getJobs();
+        const existingIds = new Set(existing.map(j => j.id));
+        const newJobs = data.jobs.filter(j => !existingIds.has(j.id));
+        const merged = [...newJobs, ...existing];
+        saveJobs(merged);
+        renderAll();
+        showToast(`📥 Importados ${newJobs.length} trabajos nuevos`, 'ok');
+      } else {
+        showToast('Archivo no válido.', 'error');
+      }
+    } catch {
+      showToast('Error al leer el archivo.', 'error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════
+function openSettings() {
+  document.getElementById('settings-apikey').value = getApiKey();
+  document.getElementById('settings-overdue').value = getOverdueDays();
+  showModal('settings-modal');
+}
+
+function saveSettings() {
+  const key = document.getElementById('settings-apikey').value.trim();
+  const days = Number(document.getElementById('settings-overdue').value) || 7;
+
+  if (key) localStorage.setItem(API_KEY_STORE, key);
+  saveSettingsData({ overdueDays: days });
+
+  hideModal('settings-modal');
+  renderAll();
+  showToast('Configuración guardada.', 'ok');
+}
+
+function clearAllData() {
+  showConfirm('🗑️', '¿Borrar TODOS los datos?', 'Esta acción no se puede deshacer.', () => {
+    localStorage.removeItem(JOBS_KEY);
+    hideModal('settings-modal');
+    renderAll();
+    showToast('Datos borrados.', 'warn');
+  });
+}
+
+// ══════════════════════════════════════
+// MODAL HELPERS
+// ══════════════════════════════════════
+function showModal(id) {
+  document.getElementById(id).classList.add('visible');
+}
+
+function hideModal(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+
+function closeModal(e, id) {
+  if (e.target === document.getElementById(id)) hideModal(id);
+}
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+let toastTimer;
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); }, 3500);
+}
+
+// ══════════════════════════════════════
+// SERVICE WORKER (offline cache)
+// ══════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'elec-pro-v2';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+    });
+    self.addEventListener('fetch', e => {
+      if (e.request.method !== 'GET') return;
+      e.respondWith(
+        fetch(e.request).then(r => {
+          const rc = r.clone();
+          caches.open(CACHE).then(c => c.put(e.request, rc));
+          return r;
+        }).catch(() => caches.match(e.request).then(r => r || caches.match('./')))
+      );
+    });
+  `;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+
+// ══════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════
+window.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
