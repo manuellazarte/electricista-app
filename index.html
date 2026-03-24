@@ -2002,17 +2002,23 @@ function localParse(text) {
   let cliente = '';
   let descripcion = '';
 
-  // Try: "descripcion a/para/en lo de cliente"
+  // Try multiple patterns in order of specificity
   const splitPatterns = [
-    /^(.+?)\s+(?:a|para|en lo de|en casa de)\s+(.+)$/i,
-    /^(.+?)\s+(?:en|de)\s+([A-Z].+)$/,  // "en" or "de" followed by capitalized word
+    // "en lo de García tableros" / "en casa de García tableros"
+    { re: /^(?:en lo de|en casa de)\s+(.+?)\s+(.+)$/i, ci: 1, di: 2 },
+    // "a García 40 tableros" / "para García tableros" (preposition at START)
+    { re: /^(?:a|para)\s+(\S+(?:\s+\S+)?)\s+(.+)$/i, ci: 1, di: 2 },
+    // "tableros a García" / "40 tableros para García" (preposition in MIDDLE)
+    { re: /^(.+?)\s+(?:a|para|en lo de|en casa de)\s+(.+)$/i, ci: 2, di: 1 },
+    // "tableros en García" / "tableros de García" (only with capitalized name)
+    { re: /^(.+?)\s+(?:en|de)\s+([A-Z].+)$/,           ci: 2, di: 1 },
   ];
 
-  for (const pat of splitPatterns) {
-    const m = cleaned.match(pat);
+  for (const { re, ci, di } of splitPatterns) {
+    const m = cleaned.match(re);
     if (m) {
-      descripcion = m[1].trim();
-      cliente = m[2].trim();
+      cliente = m[ci].trim();
+      descripcion = m[di].trim();
       break;
     }
   }
@@ -2029,9 +2035,10 @@ function localParse(text) {
     }
   }
 
-  // Clean up trailing prepositions
+  // Clean up trailing prepositions and articles
   cliente = cliente.replace(/^(el|la|los|las|lo)\s+/i, '').trim();
   cliente = cliente.replace(/[\s,.\-—]+$/g, '').trim();
+  descripcion = descripcion.replace(/^(a|para|de|en)\s+/i, '').trim();
   descripcion = descripcion.replace(/[\s,.\-—]+$/g, '').trim();
 
   // Need at least description or client
