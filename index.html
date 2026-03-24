@@ -67,7 +67,7 @@
     }
 
     #setup-screen .sub {
-      font-size: 11px;
+      font-size: 13px;
       color: var(--faint);
       letter-spacing: 2px;
       text-align: center;
@@ -713,7 +713,7 @@
     }
 
     #profile-screen .subtitle {
-      font-size: 11px;
+      font-size: 13px;
       color: var(--faint);
       letter-spacing: 2px;
       text-align: center;
@@ -760,7 +760,7 @@
     .profile-card.accent-blue .profile-name { color: #60a5fa; }
 
     .profile-card .profile-members {
-      font-size: 9px;
+      font-size: 12px;
       color: var(--faint);
       letter-spacing: 0.5px;
       text-align: center;
@@ -809,7 +809,7 @@
     }
 
     .client-stat .lbl {
-      font-size: 9px;
+      font-size: 11px;
       color: var(--faint);
       letter-spacing: 0.5px;
     }
@@ -839,7 +839,7 @@
     }
 
     .client-job-left .date {
-      font-size: 10px;
+      font-size: 12px;
       color: var(--faint);
       margin-top: 2px;
     }
@@ -856,7 +856,7 @@
     }
 
     .client-job-right .status {
-      font-size: 9px;
+      font-size: 11px;
       margin-top: 2px;
     }
 
@@ -999,7 +999,7 @@
     <!-- Search -->
     <div class="search-wrap" id="search-wrap">
       <span class="icon">🔍</span>
-      <input type="text" placeholder="Buscar cliente o trabajo..." id="search-input" oninput="renderAll()" />
+      <input type="text" placeholder="Buscar cliente o trabajo..." id="search-input" oninput="debouncedRender()" aria-label="Buscar cliente o trabajo" />
     </div>
 
     <!-- List -->
@@ -1021,7 +1021,7 @@
       <button class="btn-send" id="send-btn" onclick="sendJob()">⚡</button>
     </div>
     <div class="input-hints">
-      <span class="input-hint">Escribí, dictá por voz, o →</span>
+      <span class="input-hint">Escribí o usá el micrófono</span>
       <button class="btn-manual" onclick="openManualAdd()">+ MANUAL</button>
     </div>
   </div>
@@ -1071,7 +1071,7 @@
     <div class="wa-phone-field">
       <div class="field-label">NÚMERO DEL CLIENTE (opcional)</div>
       <input type="tel" class="text-input" id="wa-phone" placeholder="Ej: 1155667788" />
-      <div style="font-size:10px;color:var(--faint);margin-top:4px">Sin 0 ni 15. Si lo dejás vacío se abre WhatsApp para que elijas el contacto.</div>
+      <div style="font-size:12px;color:var(--faint);margin-top:4px">Sin 0 ni 15. Si lo dejás vacío se abre WhatsApp para que elijas el contacto.</div>
     </div>
 
     <div class="modal-actions">
@@ -1104,7 +1104,7 @@
     <div class="modal-title" id="client-modal-title">HISTORIAL</div>
     <div id="client-modal-info"></div>
     <div id="client-modal-stats"></div>
-    <div style="font-size:11px;color:var(--faint);letter-spacing:1px;margin-bottom:10px">TRABAJOS</div>
+    <div style="font-size:12px;color:var(--faint);letter-spacing:1px;margin-bottom:10px">TRABAJOS</div>
     <div id="client-modal-jobs"></div>
     <div class="modal-actions" style="margin-top:16px">
       <button class="btn-secondary" onclick="hideModal('client-modal')">CERRAR</button>
@@ -1127,7 +1127,7 @@
     <div class="modal-field">
       <div class="field-label">DÍAS PARA MARCAR COMO ATRASADO</div>
       <input type="number" class="text-input" id="settings-overdue" placeholder="7" />
-      <div style="font-size:10px;color:var(--faint);margin-top:4px">Trabajos pendientes con más de estos días se marcan en rojo</div>
+      <div style="font-size:12px;color:var(--faint);margin-top:4px">Trabajos pendientes con más de estos días se marcan en rojo</div>
     </div>
 
     <div style="display:flex;gap:10px;margin-top:8px">
@@ -1313,6 +1313,12 @@ function daysSince(iso) {
   return Math.floor((Date.now() - new Date(iso + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
 }
 
+let searchTimer;
+function debouncedRender() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(renderAll, 300);
+}
+
 function renderAll() {
   const jobs = getJobs();
   const searchQ = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
@@ -1393,7 +1399,7 @@ function renderAll() {
     return `
     <div class="job-card ${overdue ? 'overdue' : ''}">
       <div class="job-top">
-        <button class="job-client-btn" onclick="openClientHistory('${escHtml(j.cliente).replace(/'/g, "\\'")}')">${escHtml(j.cliente)}</button>
+        <button class="job-client-btn" data-client="${escHtml(j.cliente)}">${escHtml(j.cliente)}</button>
         <span class="chip ${j.pagado ? 'chip-paid' : (overdue ? 'chip-overdue' : 'chip-pending')}">
           ${j.pagado ? 'COBRADO' : (overdue ? 'ATRASADO' : 'PENDIENTE')}
         </span>
@@ -1410,8 +1416,8 @@ function renderAll() {
         <div class="job-actions">
           ${!j.pagado ? `<button class="btn-pay" onclick="confirmPaid(${j.id})">COBRÉ ✓</button>` : ''}
           ${!j.pagado ? `<button class="btn-wa" onclick="openWhatsApp(${j.id})">WA</button>` : ''}
-          <button class="btn-sm" onclick="openEdit(${j.id})" title="Editar">✏️</button>
-          <button class="btn-sm" onclick="confirmDelete(${j.id})" title="Eliminar">🗑️</button>
+          <button class="btn-sm" onclick="openEdit(${j.id})" title="Editar" aria-label="Editar trabajo">✏️</button>
+          <button class="btn-sm" onclick="confirmDelete(${j.id})" title="Eliminar" aria-label="Eliminar trabajo">🗑️</button>
         </div>
       </div>
     </div>
@@ -1890,7 +1896,7 @@ async function sendJob() {
 
   const btn = document.getElementById('send-btn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="loading-dots" style="font-size:11px"></span>';
+  btn.innerHTML = '<span class="loading-dots" style="font-size:13px"></span>';
 
   const apiKey = getApiKey();
   let aiSuccess = false;
@@ -1922,14 +1928,19 @@ Si NO es un trabajo (es una pregunta o saludo):
 {"error":"no_trabajo","mensaje":"respuesta breve en español"}`;
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: SYSTEM + '\n\nUsuario: ' + text }] }],
           generationConfig: { responseMimeType: 'application/json' }
-        })
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeout);
 
       if (res.ok) {
         const data = await res.json();
@@ -1958,7 +1969,7 @@ Si NO es un trabajo (es una pregunta o saludo):
   // Fallback: local parser
   if (!aiSuccess) {
     const local = localParse(text);
-    if (local && (local.cliente !== 'Sin nombre' || local.descripcion !== 'Trabajo eléctrico')) {
+    if (local && (local.cliente !== 'Sin nombre' || local.monto > 0)) {
       saveJobFromParsed(local, input, 'local');
     } else {
       // Can't parse — open manual modal with text pre-filled
@@ -2006,7 +2017,7 @@ function openClientHistory(clientName) {
   let infoHtml = '';
   if (phone) {
     infoHtml += `<div class="client-info-row">📱 ${escHtml(phone)}
-      <button class="btn-wa" style="font-size:10px;padding:4px 8px" onclick="window.open('https://wa.me/549${phone}','_blank')">WA</button>
+      <button class="btn-wa" style="font-size:12px;padding:6px 10px" onclick="window.open('https://wa.me/549${phone}','_blank')">WA</button>
     </div>`;
   }
   infoHtml += `<div class="client-info-row">📋 ${totalJobs} trabajo${totalJobs !== 1 ? 's' : ''} en total</div>`;
@@ -2141,7 +2152,13 @@ function clearAllData() {
 // MODAL HELPERS
 // ══════════════════════════════════════
 function showModal(id) {
-  document.getElementById(id).classList.add('visible');
+  const modal = document.getElementById(id);
+  modal.classList.add('visible');
+  // Auto-focus first input for accessibility
+  setTimeout(() => {
+    const firstInput = modal.querySelector('input:not([type=hidden])');
+    if (firstInput) firstInput.focus();
+  }, 100);
 }
 
 function hideModal(id) {
@@ -2190,13 +2207,22 @@ if ('serviceWorker' in navigator) {
   `;
   const blob = new Blob([swCode], { type: 'application/javascript' });
   const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
+  navigator.serviceWorker.register(swUrl).then(() => URL.revokeObjectURL(swUrl)).catch(() => URL.revokeObjectURL(swUrl));
 }
 
 // ══════════════════════════════════════
 // BOOT
 // ══════════════════════════════════════
-window.addEventListener('DOMContentLoaded', initApp);
+window.addEventListener('DOMContentLoaded', () => {
+  initApp();
+  // Event delegation for client history buttons (avoids XSS from inline onclick)
+  document.getElementById('job-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('.job-client-btn');
+    if (btn && btn.dataset.client) {
+      openClientHistory(btn.dataset.client);
+    }
+  });
+});
 </script>
 </body>
 </html>
