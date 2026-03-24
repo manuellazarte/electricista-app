@@ -17,10 +17,10 @@
 
   <style>
     :root {
-      --bg: #0f0f0f;
-      --surface: #1a1a1a;
-      --border: #252525;
-      --border-hover: #333;
+      --bg: #0a0a0a;
+      --surface: #1f1f1f;
+      --border: #333333;
+      --border-hover: #444;
       --yellow: #f5c518;
       --yellow-light: #ffd740;
       --yellow-dim: #3a2e00;
@@ -30,9 +30,9 @@
       --red-dim: #5a1a1a;
       --blue: #818cf8;
       --text: #f0f0f0;
-      --muted: #888;
-      --faint: #444;
-      --very-faint: #2a2a2a;
+      --muted: #999;
+      --faint: #555;
+      --very-faint: #2e2e2e;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -161,9 +161,9 @@
       z-index: 50;
     }
 
-    .app-header .logo-wrap { display: flex; align-items: center; gap: 10px; }
-    .app-header .logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--yellow); letter-spacing: 2px; }
-    .app-header .logo-sub { font-size: 9px; color: var(--faint); letter-spacing: 1px; }
+    .app-header .logo-wrap { display: flex; align-items: center; gap: 12px; }
+    .app-header .logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--yellow); letter-spacing: 2px; }
+    .app-header .logo-sub { font-size: 10px; color: var(--faint); letter-spacing: 1px; }
 
     .header-actions { display: flex; gap: 6px; }
 
@@ -200,11 +200,11 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 16px 18px;
+      padding: 18px 20px;
     }
 
     .stat-label {
-      font-size: 9px;
+      font-size: 10px;
       color: var(--faint);
       letter-spacing: 1.5px;
       margin-bottom: 6px;
@@ -212,7 +212,7 @@
 
     .stat-amount {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 28px;
+      font-size: 32px;
       line-height: 1;
       margin-bottom: 4px;
     }
@@ -295,7 +295,7 @@
     }
 
     .search-wrap input:focus { border-color: var(--yellow); }
-    .search-wrap input::placeholder { color: var(--faint); }
+    .search-wrap input::placeholder { color: var(--muted); }
 
     .search-wrap .icon {
       position: absolute;
@@ -475,6 +475,7 @@
       right: 0;
       background: var(--bg);
       border-top: 1px solid var(--border);
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.6);
       padding: 16px;
       padding-bottom: calc(16px + var(--safe-bottom));
       z-index: 50;
@@ -1282,7 +1283,7 @@ function initApp() {
 
 function updateHeaderForProfile() {
   const p = PROFILES[currentProfile];
-  document.getElementById('header-logo').innerHTML = miniLogoSvg(currentProfile, 28);
+  document.getElementById('header-logo').innerHTML = miniLogoSvg(currentProfile, 38);
   document.getElementById('header-sub').textContent = `${p.name} — CONTROL DE COBROS`;
 }
 
